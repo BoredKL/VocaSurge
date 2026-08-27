@@ -1,0 +1,955 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <meta name="theme-color" content="#0d9488">
+  <link rel="apple-touch-icon" href="./icon-180.png">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🌊%3C/text%3E%3C/svg%3E">
+  <title>VocaSurge🌊</title>
+  <style>
+    :root {
+      --bg:#f7f3ea; --card:#fff; --strip:#f4f0e7; --pane:#ece8de;
+      --ink:#2b2924; --ink2:#4f4c44; --muted:#8b887e; --border:#e6e2d8; --border2:#cbc6ba;
+      --primary:#0d9488; --primary-h:#14b8a6; --primary-d:#0f766e; --primary-bg:#ccfbf1;
+      --danger:#dc2626;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:"Segoe UI","Microsoft YaHei UI",system-ui,-apple-system,sans-serif;
+      background:var(--bg);color:var(--ink);line-height:1.6}
+    ::-webkit-scrollbar{width:6px;height:6px}
+    ::-webkit-scrollbar-track{background:var(--bg)}
+    ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:999px}
+    ::-webkit-scrollbar-thumb:hover{background:#b9b4a7}
+
+    /* 顶部细条（无圆角，参考样式） */
+    .topbar{background:linear-gradient(120deg,var(--primary-d),var(--primary-h));color:#fff}
+    .tb-inner{display:flex;align-items:center;justify-content:space-between;gap:12px;
+      max-width:1180px;margin:0 auto;padding:12px 20px;flex-wrap:wrap}
+    .tb-inner b{font-size:18px;letter-spacing:.4px}
+    .tb-meta{display:flex;gap:16px;font-size:12px;opacity:.95;flex-wrap:wrap}
+    .tb-meta span b{font-weight:700}
+
+    .app{display:flex;gap:0;max-width:1180px;margin:0 auto;min-height:calc(100vh - 46px)}
+    /* 侧边栏 */
+    .side{width:196px;flex-shrink:0;background:#fbf9f2;border-right:1px solid var(--border);
+      padding:16px 12px}
+    .side-group{font-size:11px;color:var(--muted);font-weight:700;padding:12px 10px 6px;
+      letter-spacing:.4px}
+    .side a{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:10px;
+      color:var(--ink2);text-decoration:none;font-size:14px;font-weight:600;cursor:pointer;
+      margin-bottom:2px;transition:.15s}
+    .side a:hover{background:var(--pane)}
+    .side a.active{background:var(--primary-bg);color:var(--primary-d)}
+    .side a .ico{width:16px;text-align:center}
+    .side-foot{margin-top:18px;padding:10px;border-top:1px solid var(--border);
+      font-size:11px;color:var(--muted)}
+
+    .main{flex:1;min-width:0;padding:18px 20px 40px;overflow-y:auto}
+    .panel{display:none}
+    .panel.active{display:block}
+
+    /* 主页（极简 · 打字机占位，类 AI 开屏） */
+    .home{max-width:760px;margin:0 auto;padding-top:22vh;text-align:center}
+    .home .mark{font-size:52px;line-height:1}
+    .home h1{font-size:32px;margin:16px 0 12px;font-weight:800;letter-spacing:.6px}
+    .home h1.typing-title{min-height:1.3em;line-height:1.35;margin-bottom:0}
+    .home .typing{min-height:38px;font-size:20px;color:var(--muted);font-weight:500}
+    .caret{display:inline-block;width:2px;height:1.05em;background:var(--primary);margin-left:3px;
+      vertical-align:-0.15em;animation:blink 1s steps(1) infinite}
+    @keyframes blink{50%{opacity:0}}
+
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;
+      overflow:hidden;box-shadow:0 6px 18px rgba(15,23,42,.05);margin-bottom:16px}
+    .card .head{display:flex;align-items:center;justify-content:space-between;gap:10px;
+      background:var(--strip);border-bottom:1px solid var(--border);padding:11px 16px;
+      font-size:14px;font-weight:700;color:var(--ink2);flex-wrap:wrap}
+    .card .head .tools{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-weight:600}
+    .card .body{padding:16px}
+    .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--primary);
+      margin-right:8px;vertical-align:middle}
+
+    .control{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .count-inline{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink2)}
+    input,select,textarea{font-family:inherit;color:var(--ink);background:var(--card);
+      border:1px solid var(--border2);border-radius:12px}
+    input[type=number]{width:74px;height:42px;font-size:16px;font-weight:600;text-align:center}
+    input[type=text]{height:40px;padding:0 12px;font-size:14px}
+    select{height:40px;padding:0 10px;font-size:14px}
+    textarea{padding:10px 12px;font-size:13px;resize:vertical}
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none}
+    input[type=number]{-moz-appearance:textfield}
+    button{border:0;border-radius:12px;height:42px;padding:0 16px;font-size:14px;cursor:pointer;
+      font-weight:700;transition:.15s ease;font-family:inherit}
+    button:disabled{opacity:.45;cursor:not-allowed}
+    .btn-primary{background:var(--primary);color:#fff;box-shadow:0 5px 14px rgba(13,148,136,.26)}
+    .btn-primary:hover{background:var(--primary-h)}
+    .btn-soft{background:var(--pane);color:var(--ink2)}
+    .btn-soft:hover{background:#e2ded2}
+    .btn-ghost{background:transparent;color:var(--primary-d);padding:0 10px}
+    .btn-ghost:hover{background:var(--primary-bg)}
+    .btn-sm{height:34px;padding:0 12px;font-size:13px;border-radius:10px}
+    .btn-xs{height:28px;padding:0 10px;font-size:12px;border-radius:8px}
+
+    .words{margin-top:14px;display:flex;flex-wrap:wrap;gap:9px;min-height:40px}
+    .chip{background:var(--primary-bg);color:var(--primary-d);border:1px solid rgba(13,148,136,.22);
+      border-radius:16px;padding:6px 15px;font-size:14px;font-weight:700}
+    .chip:nth-child(3n+2){background:#fef3c7;border-color:#fcd34d;color:#92400e}
+    .chip:nth-child(3n+3){background:#d1fae5;border-color:#a7f3d0;color:#065f46}
+    .chip{position:relative}
+    .chip .tip{position:absolute;left:50%;bottom:calc(100% + 9px);
+      transform:translateX(-50%) translateY(7px);background:var(--ink);color:#fff;
+      padding:8px 12px;border-radius:10px;font-size:12px;font-weight:600;line-height:1.5;
+      white-space:normal;min-width:120px;max-width:230px;text-align:center;opacity:0;
+      pointer-events:none;transition:.18s ease;box-shadow:0 10px 24px rgba(0,0,0,.22);z-index:40}
+    .chip .tip .ph{display:block;font-size:11px;opacity:.8;font-weight:500}
+    .chip .tip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);
+      border:6px solid transparent;border-top-color:var(--ink)}
+    .chip:hover .tip{opacity:1;transform:translateX(-50%) translateY(0)}
+    .chip:hover .tip.none{opacity:.75}
+    .empty{color:var(--muted);font-size:14px}
+
+    .prompt{background:var(--strip);border:1px solid var(--border);border-radius:12px;
+      padding:14px 16px;margin-top:4px;min-height:70px;font-size:15px;white-space:pre-wrap;
+      word-break:break-word}
+    .foot{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+    .hint{font-size:12px;color:var(--muted)}
+    .hint code{background:var(--primary-bg);color:var(--primary-d);padding:1px 6px;border-radius:5px}
+
+    .bank-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+    .table-wrap{max-height:320px;overflow:auto;border:1px solid var(--border);border-radius:12px}
+    table{width:100%;border-collapse:collapse;font-size:14px}
+    thead th{position:sticky;top:0;background:var(--strip);color:var(--ink2);text-align:left;
+      font-size:12px;font-weight:700;padding:9px 14px;border-bottom:1px solid var(--border)}
+    tbody td{padding:8px 14px;border-bottom:1px solid var(--border)}
+    tbody tr:last-child td{border-bottom:0}
+    tbody tr:hover{background:#faf7f0}
+    .wk{text-align:center;width:84px}.op{width:48px;text-align:center}
+    .del{color:var(--danger);cursor:pointer;font-size:16px;line-height:1}
+    .del:hover{color:#b91c1c}
+    .defc{min-width:180px}
+    .def-td{padding:4px 8px}
+    .def-td input{width:100%;height:34px;border:0;background:transparent;padding:0 6px;
+      font-size:13px;color:var(--ink);border-radius:8px}
+    .def-td input:focus{background:var(--bg);outline:1px solid var(--primary)}
+    .def-td .empty-hint{color:var(--muted);font-size:12px;padding-left:6px}
+
+    .paste-wrap{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}
+    .paste-wrap textarea{flex:1;min-width:180px;min-height:80px}
+    .prompt-item{border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px}
+    .prompt-item .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+    .prompt-item input[type=text]{flex:1;min-width:160px}
+    .prompt-item textarea{width:100%;min-height:74px}
+    .hist-item{border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+    .hist-item .top{display:flex;justify-content:space-between;align-items:center;gap:10px;
+      margin-bottom:6px}
+    .hist-item .t{font-size:12px;color:var(--muted)}
+    .hist-item .txt{font-size:14px;white-space:pre-wrap;word-break:break-word}
+    .hist-words{margin:10px 0 6px;padding:12px;background:var(--bg);border:1px solid var(--border);
+      border-radius:14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+    .hist-words .chip{font-size:13px;padding:5px 12px}
+    .usage-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+    .toast{position:fixed;top:14px;right:20px;z-index:120;background:var(--ink);color:#fff;
+      padding:10px 16px;border-radius:10px;font-size:13px;font-weight:600;opacity:0;
+      transform:translateY(-8px);transition:.2s ease;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+    .toast.show{opacity:1;transform:none}
+
+    /* 翻卡刷词 */
+    .overlay{position:fixed;inset:0;background:var(--bg);display:flex;z-index:80;overflow:hidden}
+    .overlay[hidden]{display:none}
+    .review{width:100%;max-width:940px;margin:0 auto;height:100vh;display:flex;
+      flex-direction:column;padding:16px 22px 22px;overflow:hidden}
+    .rhead{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .r-title{font-weight:800;font-size:16px;display:flex;align-items:center;gap:6px}
+    .r-context{font-size:12px;color:var(--muted);margin-top:4px}
+    .r-progress{font-size:12px;color:var(--ink2);margin:10px 0 12px;display:flex;
+      align-items:center;justify-content:space-between}
+    .r-bar{flex:1;height:6px;background:var(--pane);border-radius:6px;margin:0 10px;overflow:hidden}
+    .r-bar .fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--primary-h));
+      border-radius:6px;transition:width .3s}
+    .r-stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+    .r-card{flex:none;height:380px;width:min(560px,92%);perspective:1200px;cursor:pointer;
+      position:relative;margin:12px auto}
+    .r-card .rf,.r-card .rb{position:absolute;inset:0;backface-visibility:hidden;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:24px;
+      border:1px solid var(--border);background:var(--card);padding:30px;text-align:center;
+      box-shadow:0 18px 44px rgba(15,23,42,.08);
+      transition:transform .5s cubic-bezier(.34,1.2,.5,1)}
+    .r-card .rb{transform:rotateY(180deg)}
+    .r-card.flipped .rf{transform:rotateY(180deg)}
+    .r-card.flipped .rb{transform:rotateY(360deg)}
+    .rf-word{font-size:38px;font-weight:800;color:var(--ink);word-break:break-word}
+    .rf-ph{font-size:15px;color:var(--muted);margin-top:10px}
+    .rf-hint{margin-top:22px;color:var(--muted);font-size:12px;opacity:.8}
+    .rb-meaning{font-size:23px;font-weight:700;color:var(--primary-d);word-break:break-word;line-height:1.5}
+    .rb-pos{font-size:14px;color:var(--muted);margin-top:14px}
+    .r-controls{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;margin-top:18px}
+    .r-controls button{height:44px;font-size:15px}
+    .mark-red{background:#fee2e2;color:#b91c1c}.mark-red:hover{background:#fecaca}
+    .mark-yellow{background:#fef3c7;color:#92400e}.mark-yellow:hover{background:#fde68a}
+    .mark-green{background:#d1fae5;color:#065f46}.mark-green:hover{background:#a7f3d0}
+    .r-summary{margin-top:16px;border-top:1px solid var(--border);padding-top:14px}
+    .r-summary .stats{display:flex;gap:14px;justify-content:center;margin-bottom:14px;font-size:13px}
+    .r-summary .stats b{font-size:18px;display:block;text-align:center}
+
+    @media (max-width:720px){
+      .app{flex-direction:column}
+      .side{width:auto;border-right:0;border-bottom:1px solid var(--border);display:flex;
+        flex-wrap:wrap;gap:4px;padding:10px}
+      .side-group{display:none}
+      .side-foot{display:none}
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar"><div class="tb-inner">
+    <b>🌊 VocaSurge</b>
+    <div class="tb-meta" id="meta"></div>
+  </div></div>
+
+  <div class="app">
+    <aside class="side">
+      <div class="side-group">主页</div>
+      <a data-panel="panel-home" class="active"><span class="ico">⌂</span>主页</a>
+      <div class="side-group">生成</div>
+      <a data-panel="panel-draw"><span class="ico">✦</span>抽词</a>
+      <div class="side-group">管理</div>
+      <a data-panel="panel-bank"><span class="ico">▤</span>词库管理</a>
+      <a data-panel="panel-prompts"><span class="ico">✎</span>提示词管理</a>
+      <div class="side-group">复习</div>
+      <a onclick="openAimless()"><span class="ico">⇄</span>刷词<small style="color:var(--muted);font-weight:500">翻卡</small></a>
+      <div class="side-group">记录</div>
+      <a data-panel="panel-usage"><span class="ico">◷</span>使用记录</a>
+      <a data-panel="panel-history"><span class="ico">☰</span>历史提示词</a>
+      <div class="side-foot" style="text-align:center">Topikal ICS,TJTU</div>
+      
+
+
+    </aside>
+
+    <main class="main">
+      <!-- 主页 -->
+      <section class="panel active" id="panel-home">
+        <div class="home">
+          <div class="mark">🌊</div>
+          <h1 class="typing-title"><span id="typeText"></span><span class="caret"></span></h1>
+        </div>
+      </section>
+
+      <!-- 抽词 -->
+      <section class="panel" id="panel-draw">
+        <div class="card">
+          <div class="head"><span><span class="dot"></span>本轮抽词</span>
+            <span class="tools">
+              <select id="promptSel"></select>
+            </span></div>
+          <div class="body">
+            <div class="control">
+              <span class="count-inline">本轮词数
+                <input id="n" type="number" min="1" value="20"></span>
+              <button class="btn-primary" onclick="generate()">✦ 抽词</button>
+              <button class="btn-soft" onclick="copyPrompt()">复制提示词</button>
+              <span class="hint" id="countLabel"></span>
+            </div>
+            <div class="words" id="words"><span class="empty">点击「✦ 抽词」开始。</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="head"><span><span class="dot"></span>给 AI 的提示词</span>
+            <span class="tools"><span class="hint" id="promptName"></span></span></div>
+          <div class="body">
+            <div class="prompt" id="prompt">—</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 词库管理 -->
+      <section class="panel" id="panel-bank">
+        <div class="card">
+          <div class="head"><span><span class="dot"></span>词库管理</span>
+            <span class="tools">
+              <button class="btn-ghost btn-sm" onclick="importWords()">导入词库</button>
+              <button class="btn-ghost btn-sm" onclick="exportWords()">导出词库</button>
+              <button class="btn-ghost btn-sm" onclick="downloadDataJson()">下载数据</button>
+              <button class="btn-soft btn-sm" id="defToggle" onclick="toggleDefs()">显示释义</button>
+              <button class="btn-ghost btn-sm" style="color:var(--danger)" onclick="clearBank()">清空词库</button>
+              <span class="hint" id="bankCount"></span>
+            </span></div>
+          <div class="body">
+            <div class="bank-tools">
+              <input type="text" id="addInput" placeholder="新增一个词，回车添加" style="flex:1;min-width:130px">
+              <button class="btn-primary btn-sm" onclick="addWord()">添加</button>
+              <input type="text" id="searchInput" placeholder="搜索…" style="flex:1;min-width:110px">
+              <button class="btn-soft btn-sm" onclick="clearStats()">清空统计</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr id="bankHeadRow"></tr></thead>
+                <tbody id="bankBody"></tbody>
+              </table>
+            </div>
+            <div class="foot" style="margin-top:10px"><span class="hint">中文释义三种添加：①点「显示释义」直接往列里填；②批量粘贴 <code>word,meaning</code>；③导入 <code>word,meaning</code> / <code>word,phonetic,pos,meaning</code> 文件。格式见 <code>vocabulary-format.md</code>。</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="head"><span><span class="dot"></span>批量加词 / 补释义</span></div>
+          <div class="body">
+            <div class="paste-wrap">
+              <textarea id="pasteArea" placeholder="每行一个词；或每行 word,meaning（一词一释义，用逗号/制表符分隔）。粘贴后点「添加到词库」，会自动加词并填中文释义。"></textarea>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <button class="btn-primary btn-sm" onclick="batchAdd()">添加到词库</button>
+                <span class="hint">自动去重；已有词只补释义；<code>word,meaning</code> 格式即可。</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 提示词管理 -->
+      <section class="panel" id="panel-prompts">
+        <div class="card">
+          <div class="head"><span><span class="dot"></span>提示词管理</span>
+            <span class="tools"><button class="btn-primary btn-sm" onclick="addPrompt()">新增模板</button></span></div>
+          <div class="body">
+            <div class="hint" style="margin-bottom:12px">在模板里写 <code>{words}</code> 代表插入抽到的词；哪个是抽词时用的，点「设为当前」。改动会自动保存。</div>
+            <div id="promptList"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 使用记录 -->
+      <section class="panel" id="panel-usage">
+        <div class="card">
+          <div class="head"><span><span class="dot"></span>使用记录</span>
+            <span class="tools">
+              <button class="btn-primary btn-sm" onclick="reviewUsage()">用已用词刷词</button>
+              <button class="btn-soft btn-sm" onclick="copyUsage()">复制使用记录</button>
+              <button class="btn-ghost btn-sm" onclick="clearUsage()">清空使用记录</button>
+              <span class="hint" id="usageInfo"></span>
+            </span></div>
+          <div class="body">
+            <div class="hint">每次抽词都会记一笔。可把「使用记录」复制到别处，或在下面粘贴手动记录来合并次数。</div>
+            <div class="usage-list" id="usageList"></div>
+            <div class="paste-wrap" style="margin-top:16px">
+              <textarea id="usagePaste" placeholder="粘贴要合并的词（JSON 数组或逗号/换行分隔），每出现一次计一次。"></textarea>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <button class="btn-primary btn-sm" onclick="mergeUsage()">合并次数</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 历史提示词 -->
+      <section class="panel" id="panel-history">
+        <div class="card">
+          <div class="head"><span><span class="dot"></span>历史提示词</span>
+            <span class="tools">
+              <label class="hint" style="display:flex;align-items:center;gap:6px">上限
+                <input id="historyLimit" type="number" min="0" style="height:30px;width:64px"></label>
+              <button class="btn-ghost btn-sm" onclick="clearHistory()">清空</button>
+            </span></div>
+          <div class="body">
+            <div class="hint" style="margin-bottom:12px">每次抽词自动保存，永久保留在本机；「上限」决定保留最近多少条（0 表示不限）。</div>
+            <div id="historyList"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 翻卡刷词 -->
+  <div class="overlay" id="reviewOverlay" hidden>
+    <div class="review">
+      <div class="rhead">
+        <button class="btn-ghost btn-sm" onclick="closeReview()">← 返回</button>
+        <div class="r-title">✦ 翻卡刷词</div>
+        <button class="btn-soft btn-sm" onclick="shuffleReview()">洗牌</button>
+      </div>
+      <div class="r-context" id="rContext"></div>
+      <div class="r-progress"><span id="rPosText"></span><div class="r-bar"><div class="fill" id="rBar"></div></div><span id="rTotal"></span></div>
+      <div class="r-stage">
+        <div class="r-card" id="rCard" onclick="flipReview()">
+          <div class="rf"><div class="rf-word" id="rWord"></div><div class="rf-ph" id="rPh"></div>
+            <div class="rf-hint">点卡片或按空格翻转</div></div>
+          <div class="rb"><div class="rb-meaning" id="rMeaning"></div><div class="rb-pos" id="rPos"></div></div>
+        </div>
+      </div>
+      <div class="r-controls" id="rControls">
+        <button class="btn-ghost btn-sm" onclick="prevReview()">←</button>
+        <button class="btn-sm mark-red" onclick="markReview('red')">不认识</button>
+        <button class="btn-sm mark-yellow" onclick="markReview('yellow')">模糊</button>
+        <button class="btn-sm mark-green" onclick="markReview('green')">认识</button>
+        <button class="btn-ghost btn-sm" onclick="nextReview()">→</button>
+      </div>
+      <div class="r-summary" id="rSummary" hidden></div>
+    </div>
+  </div>
+
+  <input type="file" id="file" accept=".csv,.txt,.json" style="display:none">
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const DEFAULT_WORDS = ['abrupt','accumulate','coherent','retain','subtle',
+                           'convey','derive','decline','inevitable','reinforce'];
+    const DEFAULT_PROMPTS = [
+      {id:'d1', name:'自然对话', body:'请在接下来的自然对话中，随机、自然地使用以下词汇，不要刻意解释这些词，也不要一次性全部使用：{words}'},
+      {id:'d2', name:'连词成段', body:'请用以下词汇写一小段连贯自然的话：{words}'}
+    ];
+    const DEFAULT_DEFS = {
+      abrupt:{phonetic:'əˈbrʌpt',pos:'adj.',meaning:'突然的；唐突的'},
+      accumulate:{phonetic:'əˈkjuːmjəleɪt',pos:'v.',meaning:'积累；积聚'},
+      coherent:{phonetic:'koʊˈhɪrənt',pos:'adj.',meaning:'连贯的；一致的'},
+      retain:{phonetic:'rɪˈteɪn',pos:'v.',meaning:'保留；保持'},
+      subtle:{phonetic:'ˈsʌtl',pos:'adj.',meaning:'微妙的；敏锐的'},
+      convey:{phonetic:'kənˈveɪ',pos:'v.',meaning:'传达；运送'},
+      derive:{phonetic:'dɪˈraɪv',pos:'v.',meaning:'获得；起源于'},
+      decline:{phonetic:'dɪˈklaɪn',pos:'v.',meaning:'下降；婉拒'},
+      inevitable:{phonetic:'ɪnˈevɪtəbl',pos:'adj.',meaning:'不可避免的'},
+      reinforce:{phonetic:'ˌriːɪnˈfɔːrs',pos:'v.',meaning:'加强；增援'}
+    };
+    const LS = (k,v) => v===undefined ? JSON.parse(localStorage.getItem(k)||'null') : localStorage.setItem(k, JSON.stringify(v));
+
+    let state = {
+      words: LS('voca_words') || [],
+      stats: LS('voca_stats') || {},
+      review: LS('voca_review') || {},
+      defs: LS('voca_defs') || {},
+      usage: LS('voca_usage') || [],
+      prompts: LS('voca_prompts') || DEFAULT_PROMPTS.slice(),
+      activePrompt: LS('voca_active_prompt') || null,
+      history: LS('voca_prompt_history') || [],
+      historyLimit: LS('voca_history_limit') === null ? 50 : LS('voca_history_limit'),
+      showDefs: LS('voca_show_defs') ?? false
+    };
+    let current = [];
+    let historyOpen = new Set();
+    // 主页打字机占位
+    const HOME_PHRASES = ['今天想做些什么…','准备好了，随时开始','by Topikal','一千万内最顶级的提示词工程生成器'];
+    let phI = 0, chI = 0, deleting = false;
+    function typeLoop(){
+      const cur = HOME_PHRASES[phI];
+      if(!deleting){
+        chI++;
+        $('typeText').textContent = cur.slice(0, chI);
+        if(chI >= cur.length){ deleting = true; setTimeout(typeLoop, 1800); return; }
+        setTimeout(typeLoop, 95);
+      } else {
+        chI--;
+        $('typeText').textContent = cur.slice(0, chI);
+        if(chI <= 0){ deleting = false; phI = (phI+1) % HOME_PHRASES.length; setTimeout(typeLoop, 320); return; }
+        setTimeout(typeLoop, 40);
+      }
+    }
+
+    function save(keys) {
+      const map = {words:'voca_words', stats:'voca_stats', usage:'voca_usage', prompts:'voca_prompts',
+        activePrompt:'voca_active_prompt', history:'voca_prompt_history', historyLimit:'voca_history_limit',
+        defs:'voca_defs', showDefs:'voca_show_defs', review:'voca_review'};
+      (keys || Object.keys(map)).forEach(k => LS(map[k], state[k]));
+    }
+    function $(id){ return document.getElementById(id); }
+    function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+    function jsStr(s){ return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+    function defOf(w){ return state.defs[w] || {}; }
+    function defMeaning(w){ const d=defOf(w); return d.meaning || ''; }
+    function extractWordsFromPrompt(text){
+      let rest = text || '';
+      const idx = Math.max(rest.lastIndexOf('：'), rest.lastIndexOf(':'), rest.lastIndexOf('\n'));
+      if(idx >= 0) rest = rest.slice(idx+1);
+      return rest.split(/[,，]\s*/).map(s=>s.trim()).filter(Boolean);
+    }
+    function flash(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show');
+      clearTimeout(flash._t); flash._t=setTimeout(()=>t.classList.remove('show'), 1800); }
+
+    async function init() {
+      try { const r = await fetch('vocabulary.json'); const d = await r.json();
+        if(!state.words.length) state.words = d.words || [];
+        for(const k in (d.stats||{})) if(!(k in state.stats)) state.stats[k] = d.stats[k];
+        for(const k in (d.defs||{})) if(!state.defs[k]) state.defs[k] = d.defs[k];
+      } catch(e) {}
+      if(!state.words.length) state.words = DEFAULT_WORDS.slice();
+      for(const w of DEFAULT_WORDS){ if(state.words.includes(w) && !state.defs[w]) state.defs[w] = DEFAULT_DEFS[w]; }
+      if(!state.prompts.length) state.prompts = DEFAULT_PROMPTS.slice();
+      if(!state.prompts.some(p=>p.id===state.activePrompt)) state.activePrompt = state.prompts[0].id;
+      // 旧历史没有记录 words：从提示词末尾解析出来，并与词库比对
+      let migrated = false;
+      for(const h of state.history){
+        if(!h.words || !h.words.length){
+          const ws = (extractWordsFromPrompt(h.text||'')||[])
+            .filter(w => state.words.some(x => x.toLowerCase() === w.toLowerCase()));
+          if(ws.length){ h.words = ws; migrated = true; }
+        }
+      }
+      if(migrated) save(['history']);
+      save();
+      buildPromptSelect();
+      $('n').max = state.words.length;
+      $('historyLimit').value = state.historyLimit;
+      refreshMeta(); renderBank(); renderPrompts(); renderUsage(); renderHistory(); showUsageInfo();
+      typeLoop();
+    }
+
+    // ---- 顶部 & 导航 ----
+    function refreshMeta() {
+      $('meta').innerHTML = '<span>词库 <b>'+state.words.length+'</b> 词</span>'+
+        '<span>已记录 <b>'+state.usage.length+'</b> 次</span>'+
+        '<span>历史 <b>'+state.history.length+'</b> 条</span>';
+      $('countLabel').textContent = '词库共 ' + state.words.length + ' 词';
+      $('bankCount').textContent = '共 ' + state.words.length + ' 词';
+    }
+    document.querySelectorAll('.side a').forEach(a => a.addEventListener('click', () => switchPanel(a)));
+    function switchPanel(a) {
+      if(!a.dataset.panel) return;
+      document.querySelectorAll('.side a').forEach(x => x.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      a.classList.add('active');
+      $(a.dataset.panel).classList.add('active');
+    }
+    function goPanel(id){
+      document.querySelectorAll('.side a').forEach(x => x.classList.toggle('active', x.dataset.panel === id));
+      document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === id));
+    }
+
+    // ---- 抽词 ----
+    function pick(n) {
+      let pool=[...state.words], out=[];
+      for(let k=0;k<Math.min(n,pool.length);k++){
+        let ws=pool.map(w=>1/(1+(state.stats[w]||0)*0.35));
+        let s=ws.reduce((a,b)=>a+b,0), x=Math.random()*s, i=0;
+        for(;i<ws.length;i++){ x-=ws[i]; if(x<=0) break; }
+        out.push(pool[i]); pool.splice(i,1);
+      }
+      return out;
+    }
+    function chipHtml(w){
+      const d=defOf(w); const m=(d.meaning||'').trim();
+      const tip = m
+        ? ((d.phonetic?'<span class="ph">'+esc(d.phonetic)+'</span>':'')+esc(m))
+        : '<span class="ph">（暂无释义）</span>';
+      return '<span class="chip">'+esc(w)+'<span class="tip"'+(!m?' style="min-width:170px"':'')+'>'+tip+'</span></span>';
+    }
+    function renderChips(chosen){
+      const el=$('words');
+      if(!chosen.length){ el.innerHTML='<span class="empty">词库为空，请到「词库管理」添加或导入。</span>'; return; }
+      el.innerHTML = chosen.map(chipHtml).join('');
+    }
+    function buildPrompt(words){
+      const tpl = state.prompts.find(p=>p.id===state.activePrompt) || state.prompts[0];
+      const joined = words.join(', ');
+      if(tpl){ if(tpl.body.includes('{words}')) return tpl.body.replace('{words}', joined);
+        return tpl.body ? (tpl.body + '\n' + joined) : joined; }
+      return '请在接下来的自然对话中，随机、自然地使用以下词汇：' + joined;
+    }
+    function pushHistory(text, words){
+      state.history.unshift({ts:Date.now(), text, words: words ? words.slice() : []});
+      const lim = state.historyLimit;
+      if(lim > 0) state.history = state.history.slice(0, lim);
+    }
+    function generate(){
+      let n = Math.max(1, Math.min(+$('n').value || 20, state.words.length));
+      current = pick(n);
+      renderChips(current);
+      const t = buildPrompt(current);
+      $('prompt').textContent = t;
+      const tpl = state.prompts.find(p=>p.id===state.activePrompt);
+      $('promptName').textContent = '模板：' + (tpl ? tpl.name : '默认');
+      current.forEach(w=>{ state.stats[w]=(state.stats[w]||0)+1; state.usage.push(w); });
+      pushHistory(t, current.slice());
+      save(); refreshMeta(); renderBank(); renderUsage(); renderHistory(); showUsageInfo();
+      flash('已完成抽词并记录');
+    }
+    function buildPromptSelect(){
+      $('promptSel').innerHTML = state.prompts.map(p =>
+        '<option value="'+esc(p.id)+'"'+(p.id===state.activePrompt?' selected':'')+'>'+esc(p.name)+'</option>').join('');
+    }
+    $('promptSel').addEventListener('change', e => { state.activePrompt = e.target.value; save(['activePrompt']);
+      const tpl = state.prompts.find(p=>p.id===state.activePrompt);
+      $('promptName').textContent = '模板：' + (tpl ? tpl.name : '默认'); });
+
+    async function copyPrompt(){
+      let t = $('prompt').textContent;
+      if(t && t !== '—'){ await navigator.clipboard.writeText(t); flash('已复制提示词'); }
+    }
+
+    // ---- 词库 ----
+    function renderBank(){
+      const q = $('searchInput').value.trim().toLowerCase();
+      let list = [...state.words];
+      if(q) list = list.filter(w => w.toLowerCase().includes(q));
+      list.sort((a,b) => (state.stats[a]||0)-(state.stats[b]||0) || a.localeCompare(b));
+      const show = state.showDefs;
+      $('defToggle').textContent = show ? '隐藏释义' : '显示释义';
+      $('bankHeadRow').innerHTML = '<th>词汇</th>'+(show?'<th class="defc">中文释义</th>':'')+
+        '<th class="wk">使用次数</th><th class="op"></th>';
+      const tb = $('bankBody');
+      if(!list.length){ tb.innerHTML = '<tr><td colspan="'+(show?4:3)+'" class="empty">没有匹配的词。</td></tr>'; return; }
+      tb.innerHTML = list.map(w => {
+        const d = defOf(w);
+        const cell = show ? '<td class="def-td"><input value="'+esc(d.meaning||'')+
+          '" placeholder="点这里填中文释义" oninput="setDef(\''+jsStr(w)+'\', this.value)"></td>' : '';
+        return '<tr><td>'+esc(w)+'</td>'+cell+'<td class="wk">'+(state.stats[w]||0)+
+        ' <span class="hint" style="font-size:11px">刷'+(state.review[w]||0)+'</span>'+
+        '</td><td class="op"><span class="del" title="删除" onclick="deleteWord(\''+jsStr(w)+'\')">×</span></td></tr>';
+      }).join('');
+      refreshMeta();
+    }
+    function setDef(w, meaning){
+      state.defs[w] = Object.assign({}, state.defs[w], {meaning: meaning.trim()});
+      save(['defs']);
+    }
+    function toggleDefs(){
+      state.showDefs = !state.showDefs;
+      save(['showDefs']); renderBank();
+    }
+    function addWord(){
+      const w = $('addInput').value.trim();
+      if(!w) return;
+      if(state.words.some(x=>x.toLowerCase()===w.toLowerCase())){ flash('已存在：'+w); return; }
+      state.words.push(w); save(['words']);
+      $('n').max = state.words.length; $('addInput').value='';
+      renderBank(); refreshMeta(); flash('已添加：'+w);
+    }
+    function deleteWord(w){
+      state.words = state.words.filter(x=>x!==w); delete state.stats[w];
+      save(['words','stats']); $('n').max = state.words.length;
+      renderBank(); refreshMeta(); flash('已删除：'+w);
+    }
+    function addWordsFromText(text){
+      let added=0, existed=0, meanings=0;
+      for(const line of text.split(/\r?\n/)){
+        let fields = line.split('\t');
+        if(fields.length < 2) fields = line.split(/[,\t;]/);
+        fields = fields.map(s=>s.trim());
+        const w = fields[0];
+        if(!w) continue;
+        const meaning = fields.length > 1 ? fields[1] : '';
+        const exists = state.words.some(x=>x.toLowerCase()===w.toLowerCase());
+        if(exists){
+          existed++;
+          if(meaning){ state.defs[w] = Object.assign({}, state.defs[w], {meaning}); meanings++; }
+          continue;
+        }
+        state.words.push(w); added++;
+        if(meaning){ state.defs[w] = Object.assign({}, state.defs[w], {meaning}); meanings++; }
+      }
+      if(added || existed || meanings) save(['words','defs']);
+      return {added, existed, meanings};
+    }
+    function batchAdd(){
+      const text = $('pasteArea').value.trim();
+      if(!text){ flash('请先粘贴词'); return; }
+      const r = addWordsFromText(text);
+      $('pasteArea').value=''; $('n').max = state.words.length;
+      renderBank(); refreshMeta();
+      let msg = '新增 '+r.added+' 词';
+      if(r.meanings) msg += '，补释义 '+r.meanings+' 条';
+      if(r.existed) msg += '，跳过重复 '+r.existed+' 个';
+      flash(msg);
+    }
+    function clearStats(){
+      if(!confirm('确定清空所有词的使用次数？')) return;
+      state.stats = {}; save(['stats']); renderBank(); refreshMeta(); flash('已清空统计');
+    }
+    function clearBank(){
+      if(!confirm('确定清空整个词库？将删除所有词、释义、抽词/刷词次数、使用记录与历史提示词，且不可恢复。')) return;
+      state.words = []; state.defs = {}; state.stats = {}; state.review = {}; state.usage = []; state.history = [];
+      current = [];
+      $('n').max = 0;
+      $('words').innerHTML = '<span class="empty">词库为空，请到「词库管理」添加或导入。</span>';
+      $('prompt').textContent = '—';
+      save(); renderBank(); renderUsage(); renderHistory(); refreshMeta();
+      flash('已清空词库');
+    }
+
+    // ---- 导入 / 导出 ----
+    function importWords(){ $('file').click(); }
+    $('file').addEventListener('change', async function(){
+      const f = this.files[0]; if(!f) return;
+      const text = await f.text(); const ext = (f.name.split('.').pop()||'').toLowerCase();
+      let res; try{ res = parseImport(text, ext); }catch(e){ flash('解析失败：'+(e.message||'格式错误')); return; }
+      if(!res.words.length){ flash('没有解析到有效词'); return; }
+      state.words = res.words;
+      for(const w in res.defs){ if(res.defs[w].meaning || res.defs[w].phonetic || res.defs[w].pos) state.defs[w] = res.defs[w]; }
+      save(['words','defs']); $('n').max = state.words.length;
+      renderBank(); refreshMeta();
+      $('words').innerHTML = '<span class="empty">点击「✦ 抽词」开始。</span>';
+      flash('已导入 '+res.words.length+' 个词');
+    });
+    function splitFields(line){
+      let cells = line.split('\t');
+      if(cells.length < 2) cells = line.split(/[,\t;]/);
+      return cells.map(s=>s.trim());
+    }
+    function parseImport(text, ext){
+      const defs = {}; const arr = [];
+      if(ext==='json'){
+        const obj = JSON.parse(text); const list = Array.isArray(obj)?obj:(obj.words||[]);
+        if(!Array.isArray(list)) throw new Error('JSON 需为数组或 { words: [...] }');
+        for(const x of list){
+          if(typeof x === 'string' || typeof x === 'number'){
+            const w = String(x).trim(); if(w) arr.push(w);
+          } else if(x && typeof x === 'object'){
+            const w = String(x.word || x.term || '').trim(); if(!w) continue;
+            arr.push(w);
+            defs[w] = { meaning:String(x.meaning||x.cn||x.def||'').trim(),
+              phonetic:String(x.phonetic||'').trim(), pos:String(x.pos||'').trim() };
+          }
+        }
+      } else {
+        const lines = text.split(/\r?\n/);
+        let header = null, seenHeader = false;
+        const KEY = ['word','单词','词汇','term'];
+        for(const raw of lines){
+          if(!raw.trim()) continue;
+          const cells = splitFields(raw);
+          const first = (cells[0]||'').toLowerCase();
+          const isHdr = KEY.includes(first);
+          if(!seenHeader && isHdr){
+            const low = cells.map(c=>c.toLowerCase());
+            const ix = names => low.findIndex(c => names.some(n => c===n || c.includes(n)));
+            header = { word:ix(['word','单词','词汇','term']), meaning:ix(['meaning','释义','中文','cn','def']),
+              phonetic:ix(['phonetic','音标']), pos:ix(['pos','词性']) };
+            if(header.word < 0) header.word = 0;
+            seenHeader = true; continue;
+          }
+          seenHeader = true;
+          const idx = header || { word:0, meaning:1, phonetic:2, pos:3 };
+          const w = (cells[idx.word]||'').trim();
+          if(!w) continue;
+          arr.push(w);
+          defs[w] = { meaning:(cells[idx.meaning]||'').trim(), phonetic:(cells[idx.phonetic]||'').trim(),
+            pos:(cells[idx.pos]||'').trim() };
+        }
+      }
+      const seen=new Set(), out=[];
+      for(const w of arr){ const k=w.toLowerCase(); if(!seen.has(k)){ seen.add(k); out.push(w); } }
+      return { words: out, defs };
+    }
+    function exportWords(){
+      const lines = ['word,phonetic,pos,meaning,count'].concat(state.words.map(w=>{
+        const d = defOf(w);
+        return [w, d.phonetic||'', d.pos||'', (d.meaning||'').replace(/,/g,'，'), state.stats[w]||0].join(',');
+      }));
+      download('vocabulary.csv', lines.join('\n')); flash('已导出词库');
+    }
+    function downloadDataJson(){
+      const data = { words: state.words, stats: state.stats, defs: state.defs };
+      downloadRaw('vocabulary.json', JSON.stringify(data));
+      flash('已下载 vocabulary.json，可直接替换 web/ 里的同名文件用于托管');
+    }
+    function downloadRaw(name, text){
+      const blob = new Blob([text], {type:'application/json'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+      a.click(); URL.revokeObjectURL(a.href);
+    }
+    function download(name, text){
+      const blob = new Blob(['\ufeff'+text], {type:'text/csv;charset=utf-8'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+      a.click(); URL.revokeObjectURL(a.href);
+    }
+
+    // ---- 提示词管理 ----
+    function renderPrompts(){
+      $('promptList').innerHTML = state.prompts.map((p,i) => {
+        const active = p.id === state.activePrompt;
+        return '<div class="prompt-item">'+
+          '<div class="row">'+
+            '<button class="'+(active?'btn-primary':'btn-soft')+' btn-sm" onclick="setActivePrompt(\''+esc(p.id)+'\')">'+(active?'✓ 当前使用':'设为当前')+'</button>'+
+            '<input type="text" value="'+esc(p.name)+'" oninput="setPromptField(\''+esc(p.id)+'\',\'name\',this.value)">'+
+            '<button class="btn-ghost btn-sm" style="color:var(--danger)" onclick="deletePrompt(\''+esc(p.id)+'\')">删除</button>'+
+          '</div>'+
+          '<textarea oninput="setPromptField(\''+esc(p.id)+'\',\'body\',this.value)">'+esc(p.body)+'</textarea>'+
+        '</div>';
+      }).join('');
+      buildPromptSelect();
+    }
+    function setPromptField(id, field, val){
+      const p = state.prompts.find(x=>x.id===id); if(p) p[field] = val;
+      save(['prompts']);
+    }
+    function setActivePrompt(id){
+      state.activePrompt = id; save(['activePrompt']); renderPrompts();
+      const tpl = state.prompts.find(p=>p.id===id); $('promptName').textContent = '模板：'+(tpl?tpl.name:'默认');
+    }
+    function addPrompt(){
+      const id = 'p'+Date.now();
+      state.prompts.push({id, name:'新模板 '+(state.prompts.length+1), body:'请使用以下词汇：{words}'});
+      save(['prompts']); renderPrompts(); flash('已新增模板');
+    }
+    function deletePrompt(id){
+      if(state.prompts.length <= 1){ flash('至少保留一个模板'); return; }
+      state.prompts = state.prompts.filter(p=>p.id!==id);
+      if(state.activePrompt === id) state.activePrompt = state.prompts[0].id;
+      save(['prompts','activePrompt']); renderPrompts(); flash('已删除模板');
+    }
+
+    // ---- 使用记录 ----
+    function showUsageInfo(){
+      $('usageInfo').textContent = state.usage.length ? ('已记录 '+state.usage.length+' 次使用') : '';
+    }
+    function renderUsage(){
+      const el = $('usageList');
+      if(!state.usage.length){ el.innerHTML = '<span class="empty">暂无记录。</span>'; return; }
+      el.innerHTML = state.usage.slice(-40).map(chipHtml).join('');
+      showUsageInfo(); refreshMeta();
+    }
+    async function copyUsage(){
+      if(!state.usage.length){ flash('暂无记录'); return; }
+      await navigator.clipboard.writeText(JSON.stringify(state.usage)); flash('已复制使用记录');
+    }
+    function clearUsage(){ state.usage=[]; save(['usage']); renderUsage(); flash('已清空'); }
+    function mergeUsage(){
+      const text = $('usagePaste').value.trim(); if(!text) return;
+      let items;
+      try{ const o=JSON.parse(text); if(!Array.isArray(o)) throw new Error();
+        items = o.map(x=>String(x).trim()).filter(Boolean);
+      }catch(e){ items = text.split(/[,\n;]/).map(s=>s.trim()).filter(Boolean); }
+      let added=0;
+      for(const w of items){ state.stats[w]=(state.stats[w]||0)+1; added++; }
+      save(['stats']); renderBank(); renderUsage(); $('usagePaste').value='';
+      flash('已合并 '+added+' 次');
+    }
+
+    // ---- 历史 ----
+    function renderHistory(){
+      const el = $('historyList');
+      if(!state.history.length){ el.innerHTML = '<span class="empty">还没有历史。抽一次词就会自动记录。</span>'; return; }
+      el.innerHTML = state.history.map((h,i) => {
+        const hasWords = h.words && h.words.length;
+        const open = historyOpen.has(i);
+        return '<div class="hist-item"><div class="top"><span class="t">'+new Date(h.ts).toLocaleString()+
+          '</span><span>'+
+          (hasWords ? '<button class="btn-ghost btn-sm" onclick="toggleHistoryWords('+i+')">'+(open?'▾':'▸')+' 词条('+h.words.length+')</button>':'')+
+          (hasWords && open ? '<button class="btn-soft btn-sm" onclick="reviewHistoryWords('+i+')">▶ 开始刷词</button>':'')+
+          '<button class="btn-ghost btn-sm" onclick="copyHist(\''+i+'\')">复制</button>'+
+          '<button class="btn-ghost btn-sm" style="color:var(--danger)" onclick="delHist(\''+i+'\')">删除</button></span></div>'+
+          (hasWords && open ? '<div class="hist-words">'+h.words.map(chipHtml).join('')+'</div>' : '')+
+          '<div class="txt">'+esc(h.text)+'</div></div>';
+      }).join('');
+      refreshMeta();
+    }
+    function toggleHistoryWords(i){ historyOpen.has(i)?historyOpen.delete(i):historyOpen.add(i); renderHistory(); }
+    $('historyLimit').addEventListener('change', e => {
+      state.historyLimit = Math.max(0, parseInt(e.target.value)||0);
+      save(['historyLimit']); if(state.historyLimit>0) state.history = state.history.slice(0, state.historyLimit);
+      save(['history']); renderHistory();
+    });
+    async function copyHist(i){ await navigator.clipboard.writeText(state.history[i].text); flash('已复制该提示词'); }
+    function delHist(i){ state.history.splice(i,1); save(['history']); renderHistory(); }
+    function clearHistory(){ state.history=[]; save(['history']); renderHistory(); flash('已清空历史'); }
+
+    // ---- 刷词 / 翻卡 ----
+    const BATCH = 20;
+    let review = { pool:[], offset:0, queue:[], idx:0, marks:{}, context:'', round:0 };
+    function shuffleArr(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+    function orderWords(list){
+      const keyed = list.map(w=>({w, r:Math.random()}));
+      keyed.sort((a,b)=>{
+        const pa=(state.stats[a.w]||0)*2+(state.review[a.w]||0);
+        const pb=(state.stats[b.w]||0)*2+(state.review[b.w]||0);
+        if(pa!==pb) return pa-pb;   // 用得越少越先复习
+        return a.r-b.r;             // 同分随机
+      });
+      return keyed.map(x=>x.w);
+    }
+    function openAimless(){
+      if(!state.words.length){ flash('词库为空'); return; }
+      startReview(shuffleArr(state.words.slice()), '全部词库 · 漫无目的刷词');
+    }
+    function reviewHistoryWords(i){
+      const h = state.history[i];
+      if(!h || !h.words || !h.words.length){ flash('这组没有可刷的词'); return; }
+      startReview(shuffleArr(h.words.slice()), '历史提示词 · ' + new Date(h.ts).toLocaleString() + '（' + h.words.length + ' 词）');
+    }
+    function reviewUsage(){
+      const seen=new Set(), list=[];
+      for(const w of state.usage){ const k=w.toLowerCase(); if(!seen.has(k)){ seen.add(k); list.push(w); } }
+      if(!list.length){ flash('暂无使用记录'); return; }
+      startReview(shuffleArr(list), '使用记录 · ' + list.length + ' 词');
+    }
+    function startReview(words, ctx){
+      if(!words.length){ flash('没有可刷的词'); return; }
+      review = { pool: orderWords(words.slice()), offset:0, queue:[], idx:0, marks:{}, context:ctx, round:0 };
+      $('reviewOverlay').hidden = false; loadBatch();
+    }
+    function loadBatch(){
+      const batch = review.pool.slice(review.offset, review.offset + BATCH);
+      if(!batch.length){ showReviewSummary(); return; }
+      review.offset += batch.length; review.queue = batch;
+      review.idx = 0; review.marks = {}; review.round++; renderReview();
+    }
+    function renderReview(){
+      const total = review.queue.length;
+      $('rContext').textContent = review.context + (review.round ? (' · 第 '+review.round+' 组') : '');
+      $('rTotal').textContent = '共 ' + review.pool.length + ' 词';
+      $('rPosText').textContent = (total ? review.idx+1 : 0) + ' / ' + total;
+      $('rBar').style.width = (total ? (review.idx/total)*100 : 100) + '%';
+      if(!total){ showReviewSummary(); return; }
+      const word = review.queue[review.idx]; const d = defOf(word);
+      $('rWord').textContent = word;
+      $('rPh').textContent = d.phonetic ? '[' + d.phonetic + ']' : '';
+      $('rMeaning').textContent = d.meaning ? d.meaning : '（暂无释义，去「词库管理」填写）';
+      $('rPos').textContent = d.pos ? '词性：' + d.pos : '';
+      $('rCard').classList.remove('flipped');
+      $('rSummary').hidden = true; $('rControls').hidden = false;
+    }
+    function flipReview(){ $('rCard').classList.toggle('flipped'); }
+    function markReview(status){
+      const word = review.queue[review.idx];
+      if(!word) return;
+      review.marks[word] = status;
+      state.review[word] = (state.review[word]||0) + 1;
+      save(['review']);
+      if(review.idx >= review.queue.length - 1){ showReviewSummary(); return; }
+      review.idx++; renderReview();
+    }
+    function prevReview(){ if(review.idx>0){ review.idx--; renderReview(); } }
+    function nextReview(){ if(review.idx<review.queue.length-1){ review.idx++; renderReview(); } }
+    function shuffleReview(){
+      const rest = review.queue.slice(review.idx); shuffleArr(rest);
+      review.queue = review.queue.slice(0, review.idx).concat(rest); renderReview();
+    }
+    function showReviewSummary(){
+      let g=0,y=0,r=0;
+      for(const w in review.marks){ const s=review.marks[w]; if(s==='green')g++; else if(s==='yellow')y++; else r++; }
+      const weak = review.queue.filter(w=>review.marks[w]==='yellow'||review.marks[w]==='red');
+      const remaining = review.pool.length - review.offset;
+      $('rPosText').textContent = review.queue.length + ' / ' + review.queue.length;
+      $('rBar').style.width = '100%';
+      $('rSummary').hidden = false; $('rControls').hidden = true;
+      $('rSummary').innerHTML = '<div class="stats">'+
+        '<span><b>'+g+'</b>认识</span><span><b>'+y+'</b>模糊</span><span><b>'+r+'</b>不认识</span></div>'+
+        '<div class="r-controls">'+
+        (weak.length ? '<button class="btn-primary btn-sm" onclick="weakReview()">再刷本组（'+weak.length+' 个模糊/不认识）</button>' : '')+
+        (remaining>0 ? '<button class="btn-primary btn-sm" onclick="nextBatch()">下一组（剩 '+remaining+' 词）</button>' : '')+
+        '<button class="btn-soft btn-sm" onclick="resetBatch()">本组重来</button>'+
+        '<button class="btn-soft btn-sm" onclick="restartAll()">全部重来</button>'+
+        '<button class="btn-soft btn-sm" onclick="closeReview()">完成</button></div>';
+    }
+    function weakReview(){
+      const weak = review.queue.filter(w=>review.marks[w]==='yellow'||review.marks[w]==='red');
+      if(!weak.length){ flash('这组没有模糊/不认识的词'); return; }
+      review.queue = weak.slice(); review.idx=0; review.marks={}; renderReview();
+    }
+    function resetBatch(){ review.queue = shuffleArr(review.queue.slice()); review.idx=0; review.marks={}; renderReview(); }
+    function nextBatch(){ loadBatch(); }
+    function restartAll(){ review.pool = shuffleArr(review.pool.slice()); review.offset=0; review.round=0; loadBatch(); }
+    function closeReview(){ $('reviewOverlay').hidden = true; }
+
+    $('addInput').addEventListener('keydown', e => { if(e.key==='Enter') addWord(); });
+    $('searchInput').addEventListener('input', renderBank);
+    document.addEventListener('keydown', e => {
+      if($('reviewOverlay').hidden) return;
+      if(e.code === 'Space'){ e.preventDefault(); flipReview(); }
+      else if(e.key === 'ArrowLeft') prevReview();
+      else if(e.key === 'ArrowRight') nextReview();
+    });
+    init();
+    if('serviceWorker' in navigator){ navigator.serviceWorker.register('./sw.js').catch(()=>{}); }
+  </script>
+</body>
+</html>
